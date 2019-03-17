@@ -1,0 +1,27 @@
+{
+  "name": "ae-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "lint": "eslint src",
+    "test": "npm run lint",
+    "start": "nodemon --exec 'npm run lint && node -r esm' -- src/api"
+  },
+  "author": "Sistemium UAB",
+  "license": "ISC",
+  "repository": "Sistemium/ae-api",
+  "dependencies": {
+    "esm": "^3.2.18",
+    "koa-router": "^7.4.0",
+    "lodash": "^4.17.11",
+    "sistemium-mongo": "^1.0.0",
+    "sistemium-telegram": "^1.2.10"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb-base": "^13.0.0",
+    "eslint-plugin-import": "^2.13.0",
+    "nodemon": "^1.18.10"
+  }
+}
