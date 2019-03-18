@@ -1,6 +1,6 @@
 import ModelSchema from 'sistemium-mongo/lib/schema';
 
-export default new ModelSchema({
+const stockSchema = new ModelSchema({
   collection: 'Stock',
   schema: {
     timestamp: Date,
@@ -13,4 +13,7 @@ export default new ModelSchema({
     { warehouseId: 1, timestamp: -1 },
   ],
   mergeBy: ['warehouseId', 'articleId', 'stockBatch'],
-}).model();
+});
+
+export default stockSchema.model();
+export const schema = stockSchema.mongooseSchema();
