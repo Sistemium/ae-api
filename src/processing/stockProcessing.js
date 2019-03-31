@@ -60,6 +60,24 @@ export default async function () {
 }
 
 
+async function stockByArticle(warehouseId, timestamp) {
+
+  return Stock.aggregate([
+    {
+      $match: { warehouseId, timestamp },
+    },
+    {
+      $group: {
+        _id: '$articleId',
+        qty: { $sum: '$qty' },
+        count: { $sum: 1 },
+      },
+    },
+    { $addFields: { articleId: '$_id', warehouseId } },
+  ]);
+
+}
+
 async function stockTimestamps() {
 
   return Stock.aggregate([
@@ -77,12 +95,18 @@ async function stockTimestamps() {
     {
       $lookup: {
         from: 'Processing',
-        localField: '_id',
-        foreignField: 'name',
+        let: { warehouseId: '$_id' },
+        pipeline: [{
+          $match: {
+            $expr: { $eq: ['$name', '$$warehouseId'] },
+          },
+        }],
         as: 'processing',
       },
     },
-    { $unwind: '$processing' },
+    {
+      $unwind: { path: '$processing', preserveNullAndEmptyArrays: true },
+    },
     { $addFields: { isProcessed: { $cmp: ['$timestamp', '$processing.lastTimestamp'] } } },
     { $match: { isProcessed: 1 } },
     { $limit: 1 },
@@ -101,7 +125,7 @@ async function stockTimestamps() {
 async function processWarehouseStock(warehouseId, timestamp, conn) {
 
   const date = serverDateFormat(timestamp);
-  const data = await Stock.find({ warehouseId, timestamp });
+  const data = await stockByArticle(warehouseId, timestamp);
 
   debug('processWarehouseStock:', warehouseId, date, data.length);
 
@@ -122,7 +146,7 @@ async function exportStock(date, warehouseId, conn, stockData) {
     warehouseId, articleId, volume
   ) values (?, ?, ?)`;
 
-  const merge = `merge into ae.WarehouseStockTest as d using with auto name (
+  const merge = `merge into ae.WarehouseStock as d using with auto name (
     select
       ? as [date],
       w.id as warehouse,
@@ -131,14 +155,14 @@ async function exportStock(date, warehouseId, conn, stockData) {
     from #stock s
       join ae.Article a on a.xid = s.articleId
       join ae.Warehouse w on w.xid = s.warehouseId
-  ) as t on t.warehouse = d.warehouse 
+  ) as t on t.warehouse = d.warehouse
     and t.article = d.article 
     and t.[date] = d.[date]
   when not matched then insert
   when matched and d.volume <> t.volume then update
   `;
 
-  const nullify = `update ae.WarehouseStockTest as s
+  const nullify = `update ae.WarehouseStock as s
     set volume = 0
     from ae.Article a, ae.Warehouse w
     where a.id = s.article
