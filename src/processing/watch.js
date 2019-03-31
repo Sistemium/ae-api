@@ -2,7 +2,8 @@ import log from 'sistemium-telegram/services/log';
 import * as mongoose from 'sistemium-mongo/lib/mongoose';
 import debounce from 'lodash/debounce';
 
-import { schema } from '../models/Stock';
+import { schema as stockSchema } from '../models/Stock';
+import { articleSchema } from '../models/Article';
 
 import stockProcessing from './stockProcessing';
 
@@ -18,13 +19,16 @@ async function main() {
 
   await mongoose.connect();
 
-  const Stock = mongo.model('Stock', schema);
+  const Stock = mongo.model('Stock', stockSchema);
+  const Article = mongo.model('Article', articleSchema);
 
   Stock.watch()
     .on('change', debounce(stockProcessing, 5000));
 
-  await stockProcessing();
+  Article.watch()
+    .on('change', debounce(stockProcessing, 5000));
 
+  await stockProcessing();
 
 }
 

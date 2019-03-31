@@ -1,6 +1,6 @@
 import ModelSchema from 'sistemium-mongo/lib/schema';
 
-export default new ModelSchema({
+const schema = new ModelSchema({
   collection: 'Article',
   schema: {
     name: String,
@@ -12,4 +12,7 @@ export default new ModelSchema({
   indexes: [
     { barcodes: 1 },
   ],
-}).model();
+});
+
+export default schema.model();
+export const articleSchema = schema.mongooseSchema();
