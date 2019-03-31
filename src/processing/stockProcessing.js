@@ -5,6 +5,8 @@ import { eachSeriesAsync } from 'sistemium-telegram/services/async';
 
 import Anywhere from 'sistemium-sqlanywhere';
 
+import articleProcessing from './articleProcessing';
+
 import Stock from '../models/Stock';
 import Processing from '../models/Processing';
 
@@ -25,12 +27,6 @@ export default async function () {
 
   const jobs = await stockTimestamps();
 
-  if (!jobs.length) {
-    debug('nothing to process');
-    busy = false;
-    return;
-  }
-
   debug('jobs:', jobs.length);
 
   const conn = new Anywhere();
@@ -39,10 +35,18 @@ export default async function () {
 
     await conn.connect();
 
+    await articleProcessing(conn);
+
+    if (!jobs.length) {
+      debug('nothing to process');
+      busy = false;
+      return;
+    }
+
     await eachSeriesAsync(jobs, async ({ _id: warehouseId, timestamp }) => {
       debug(warehouseId, timestamp);
       await processWarehouseStock(warehouseId, timestamp, conn);
-      await Processing.merge([{ name: warehouseId, lastTimestamp: timestamp }]);
+      await Processing.merge([{ name: warehouseId, lastTimestamp: timestamp, group: 'Stock' }]);
     });
 
   } catch (e) {
@@ -59,7 +63,11 @@ export default async function () {
 async function stockTimestamps() {
 
   return Stock.aggregate([
-    { $match: { timestamp: { $ne: null } } },
+    {
+      $match: {
+        timestamp: { $ne: null },
+      },
+    },
     {
       $group: {
         _id: '$warehouseId',

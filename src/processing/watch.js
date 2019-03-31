@@ -25,11 +25,17 @@ async function main() {
 
   await stockProcessing();
 
+
 }
 
 process.on('SIGINT', async () => {
+
   error('SIGINT');
+
   await mongoose.disconnect()
+    .then(() => debug('disconnected main'))
     .catch(error);
+
   process.exit();
+
 });
