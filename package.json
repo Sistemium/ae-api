@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "lint": "eslint src",
+    "build": "eslint src && rm -rf dist && cp -rv src dist && cp package.json dist",
     "test": "npm run lint",
     "start": "nodemon --exec 'npm run lint && node -r esm' -- src"
   },
