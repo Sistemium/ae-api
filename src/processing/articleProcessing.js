@@ -51,20 +51,20 @@ export default async function (conn) {
         d.code,
         d.barcodes,
         d.packageRel,
-        d.deviceCts,
         cast(d.pieceVolume as DECIMAL3) as pieceVolume
     ) <> xmlForest(
         t.name,
         t.code,
         t.barcodes,
         t.packageRel,
-        t.deviceCts,
         cast(t.pieceVolume as DECIMAL3) as pieceVolume
     )
     then update
   `;
 
   const prepared = await conn.prepare(merge);
+
+  let mergedTotal = 0;
 
   await eachSeriesAsync(articles, async a => {
 
@@ -82,9 +82,14 @@ export default async function (conn) {
 
     const merged = await conn.exec(prepared, params);
 
-    debug('merged', a.code, merged);
+    if (merged) {
+      debug('merged', a.code, merged);
+      mergedTotal += merged;
+    }
 
   });
+
+  debug('total merged:', mergedTotal, 'of', articles.length);
 
   await conn.dropPrepared(merge);
 
