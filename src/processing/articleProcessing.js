@@ -3,6 +3,7 @@ import { serverDateTimeFormat } from 'sistemium-telegram/services/moments';
 import { eachSeriesAsync } from 'sistemium-telegram/services/async';
 
 import maxBy from 'lodash/maxBy';
+import map from 'lodash/map';
 
 import Processing from '../models/Processing';
 import Article from '../models/Article';
@@ -95,5 +96,57 @@ export default async function (conn) {
   }
 
   await processing.save();
+
+  const reloadStocks = await Article.aggregate([
+    {
+      $lookup: {
+        from: 'Stock',
+        localField: 'id',
+        foreignField: 'articleId',
+        as: 'stocks',
+      },
+    },
+    { $unwind: '$stocks' },
+    { $addFields: { isProcessed: { $cmp: ['$cts', '$stocks.timestamp'] } } },
+    {
+      $match: {
+        isProcessed: 1,
+        // 'stocks.timestamp': { $ne: null }
+      },
+    },
+    {
+      $group: {
+        _id: '$stocks.warehouseId',
+        count: { $sum: 1 },
+        timestamp: { $max: '$stocks.timestamp' },
+      },
+    },
+    {
+      $lookup: {
+        from: 'Processing',
+        localField: '_id',
+        foreignField: 'name',
+        as: 'processing',
+      },
+    },
+    { $unwind: '$processing' },
+    { $addFields: { isProcessed: { $cmp: ['$timestamp', '$processing.lastTimestamp'] } } },
+    {
+      $match: { isProcessed: 1 },
+    },
+  ]);
+
+  const warehouseIds = map(reloadStocks, '_id');
+
+  if (!warehouseIds.length) {
+    debug('nothing to reprocess');
+    return;
+  }
+
+  const { deletedCount } = await Processing.deleteMany({
+    name: { $in: warehouseIds },
+  });
+
+  debug('reloaded:', deletedCount);
 
 }

@@ -46,7 +46,11 @@ export default async function () {
     await eachSeriesAsync(jobs, async ({ _id: warehouseId, timestamp }) => {
       debug(warehouseId, timestamp);
       await processWarehouseStock(warehouseId, timestamp, conn);
-      await Processing.merge([{ name: warehouseId, lastTimestamp: timestamp, group: 'Stock' }]);
+      await Processing.merge([{
+        name: warehouseId,
+        lastTimestamp: new Date(),
+        group: 'Stock',
+      }]);
     });
 
   } catch (e) {

@@ -11,6 +11,7 @@ const stockSchema = new ModelSchema({
   },
   indexes: [
     { warehouseId: 1, timestamp: -1 },
+    { articleId: 1, timestamp: -1 },
   ],
   mergeBy: ['warehouseId', 'articleId', 'stockBatch'],
 });
