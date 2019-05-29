@@ -1,6 +1,6 @@
 import ModelSchema from 'sistemium-mongo/lib/schema';
 
-export default new ModelSchema({
+const schema = new ModelSchema({
   collection: 'Processing',
   schema: {
     name: String,
@@ -8,4 +8,7 @@ export default new ModelSchema({
     lastTimestamp: Date,
   },
   mergeBy: ['name'],
-}).model();
+});
+
+export default schema.model();
+export const processingSchema = schema.mongooseSchema();

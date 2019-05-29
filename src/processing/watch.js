@@ -4,10 +4,13 @@ import debounce from 'lodash/debounce';
 
 import { schema as stockSchema } from '../models/Stock';
 import { articleSchema } from '../models/Article';
+import { processingSchema } from '../models/Processing';
 
 import stockProcessing from './stockProcessing';
 
 const { debug, error } = log('watch');
+
+const WATCH_DEBOUNCE = parseInt(process.env.WATCH_DEBOUNCE, 0) || 5000;
 
 main().catch(error);
 
@@ -21,12 +24,22 @@ async function main() {
 
   const Stock = mongo.model('Stock', stockSchema);
   const Article = mongo.model('Article', articleSchema);
+  const Processing = mongo.model('Processing', processingSchema);
+
+  const debouncedProcessing = debounce(stockProcessing, WATCH_DEBOUNCE);
+
+  Processing.watch()
+    .on('change', ({ operationType }) => {
+      if (operationType === 'delete') {
+        debouncedProcessing();
+      }
+    });
 
   Stock.watch()
-    .on('change', debounce(stockProcessing, 5000));
+    .on('change', debouncedProcessing);
 
   Article.watch()
-    .on('change', debounce(stockProcessing, 5000));
+    .on('change', debouncedProcessing);
 
   await stockProcessing();
 
