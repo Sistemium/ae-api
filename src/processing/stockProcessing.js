@@ -43,6 +43,14 @@ export default async function () {
       return;
     }
 
+    const declare = `declare local temporary table #stock (
+      warehouseId STRING,
+      articleId STRING, 
+      volume INT
+    )`;
+
+    await conn.execImmediate(declare);
+
     await eachSeriesAsync(jobs, async ({ _id: warehouseId, timestamp }) => {
       debug(warehouseId, timestamp);
       await processWarehouseStock(warehouseId, timestamp, conn);
@@ -57,9 +65,9 @@ export default async function () {
     error(e.message || e);
   }
 
-  busy = false;
-
   await conn.disconnect().catch(error);
+
+  busy = false;
 
 }
 
@@ -111,9 +119,9 @@ async function stockTimestamps() {
     {
       $unwind: { path: '$processing', preserveNullAndEmptyArrays: true },
     },
-    { $addFields: { isProcessed: { $cmp: ['$timestamp', '$processing.lastTimestamp'] } } },
-    { $match: { isProcessed: 1 } },
-    { $limit: 1 },
+    { $addFields: { notProcessed: { $cmp: ['$timestamp', '$processing.lastTimestamp'] } } },
+    { $match: { notProcessed: 1 } },
+    // { $limit: 1 },
   ]);
 
 }
@@ -139,12 +147,6 @@ async function processWarehouseStock(warehouseId, timestamp, conn) {
 
 
 async function exportStock(date, warehouseId, conn, stockData) {
-
-  const declare = `declare local temporary table #stock (
-    warehouseId STRING,
-    articleId STRING, 
-    volume INT
-  )`;
 
   const insert = `insert into #stock (
     warehouseId, articleId, volume
@@ -183,8 +185,6 @@ async function exportStock(date, warehouseId, conn, stockData) {
   const values = stockData.map(s => map(cols, col => s[col]));
 
   try {
-
-    await conn.execImmediate(declare);
 
     const inserted = await conn.execImmediate(insert, values);
     debug('inserted', inserted || 0);
