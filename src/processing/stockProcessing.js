@@ -7,6 +7,8 @@ import Anywhere from 'sistemium-sqlanywhere';
 
 import articleProcessing from './articleProcessing';
 
+import * as sql from './sql/stock';
+
 import Stock from '../models/Stock';
 import Processing from '../models/Processing';
 
@@ -43,13 +45,7 @@ export default async function () {
       return;
     }
 
-    const declare = `declare local temporary table #stock (
-      warehouseId STRING,
-      articleId STRING, 
-      volume INT
-    )`;
-
-    await conn.execImmediate(declare);
+    await conn.execImmediate(sql.declare);
 
     await eachSeriesAsync(jobs, async ({ _id: warehouseId, timestamp }) => {
       debug(warehouseId, timestamp);
@@ -148,51 +144,18 @@ async function processWarehouseStock(warehouseId, timestamp, conn) {
 
 async function exportStock(date, warehouseId, conn, stockData) {
 
-  const insert = `insert into #stock (
-    warehouseId, articleId, volume
-  ) values (?, ?, ?)`;
-
-  const merge = `merge into ae.WarehouseStock as d using with auto name (
-    select
-      ? as [date],
-      w.id as warehouse,
-      a.id as article,
-      s.volume
-    from #stock s
-      join ae.Article a on a.xid = s.articleId
-      join ae.Warehouse w on w.xid = s.warehouseId
-  ) as t on t.warehouse = d.warehouse
-    and t.article = d.article 
-    and t.[date] = d.[date]
-  when not matched then insert
-  when matched and d.volume <> t.volume then update
-  `;
-
-  const nullify = `update ae.WarehouseStock as s
-    set volume = 0
-    from ae.Article a, ae.Warehouse w
-    where a.id = s.article
-      and w.id = s.warehouse
-      and w.xid = ?
-      and s.[date] = ?
-      and s.volume <> 0 
-      and a.xid not in (
-        select articleId from #stock
-      )
-  `;
-
   const cols = ['warehouseId', 'articleId', 'qty'];
   const values = stockData.map(s => map(cols, col => s[col]));
 
   try {
 
-    const inserted = await conn.execImmediate(insert, values);
+    const inserted = await conn.execImmediate(sql.insert, values);
     debug('inserted', inserted || 0);
 
-    const merged = await conn.execImmediate(merge, [date]);
+    const merged = await conn.execImmediate(sql.merge, [date]);
     debug('merged', merged || 0);
 
-    const nullified = await conn.execImmediate(nullify, [warehouseId, date]);
+    const nullified = await conn.execImmediate(sql.nullify, [warehouseId, date]);
     debug('nullified', nullified || 0);
 
     await conn.commit();
