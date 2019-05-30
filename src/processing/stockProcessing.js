@@ -1,4 +1,6 @@
 import map from 'lodash/map';
+import first from 'lodash/first';
+
 import log from 'sistemium-telegram/services/log';
 import { serverDateFormat } from 'sistemium-telegram/services/moments';
 import { eachSeriesAsync } from 'sistemium-telegram/services/async';
@@ -11,6 +13,7 @@ import * as sql from './sql/stock';
 
 import Stock from '../models/Stock';
 import Processing from '../models/Processing';
+import Warehouse from '../models/Warehouse';
 
 const { debug, error } = log('processing:stock');
 
@@ -149,6 +152,11 @@ async function exportStock(date, warehouseId, conn, stockData) {
 
   try {
 
+    if (!await checkIfExistsWarehouse()) {
+      debug('Not exists warehouseId', warehouseId);
+      await insertWarehouse();
+    }
+
     const inserted = await conn.execImmediate(sql.insert, values);
     debug('inserted', inserted || 0);
 
@@ -163,6 +171,33 @@ async function exportStock(date, warehouseId, conn, stockData) {
   } catch (e) {
     await conn.rollback();
     throw e;
+  }
+
+
+  async function checkIfExistsWarehouse() {
+
+    const res = await conn.execImmediate(sql.ifExistsWarehouse, [warehouseId]);
+
+    debug('checkIfExistsWarehouse', res);
+
+    return first(res);
+
+  }
+
+  async function insertWarehouse() {
+
+    const warehouse = await Warehouse.findOne({ id: warehouseId });
+
+    if (!warehouse) {
+      throw new Error(`Not found warehouseId ${warehouseId}`);
+    }
+
+    const { name, code } = warehouse;
+
+    await conn.execImmediate(sql.insertWarehouse, [warehouseId, name, code]);
+
+    debug('insertWarehouse', `[${name}]`);
+
   }
 
 }

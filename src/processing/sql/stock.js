@@ -36,3 +36,9 @@ export const nullify = `update ae.WarehouseStock as s
         select articleId from #stock
       )
   `;
+
+export const ifExistsWarehouse = 'select id from ae.Warehouse where xid = ?';
+
+export const insertWarehouse = `insert into ae.Warehouse (
+    xid, name, code
+  ) values (?, ?, ?)`;
