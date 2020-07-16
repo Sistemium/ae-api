@@ -15,7 +15,7 @@
   "dependencies": {
     "esm": "^3.2.18",
     "koa-router": "^7.4.0",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.19",
     "sistemium-mongo": "^1.0.0",
     "sistemium-sqlanywhere": "^1.0.0",
     "sistemium-telegram": "^1.2.10"
