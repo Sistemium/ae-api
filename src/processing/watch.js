@@ -26,7 +26,7 @@ async function main() {
   const Article = mongo.model('Article', articleSchema);
   const Processing = mongo.model('Processing', processingSchema);
 
-  const debouncedProcessing = debounce(stockProcessing, WATCH_DEBOUNCE);
+  const debouncedProcessing = debounce(() => stockProcessing().catch(error), WATCH_DEBOUNCE);
 
   Processing.watch()
     .on('change', ({ operationType }) => {
