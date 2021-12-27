@@ -1,6 +1,6 @@
-import log from 'sistemium-telegram/services/log';
-import { serverDateTimeFormat } from 'sistemium-telegram/services/moments';
-import { eachSeriesAsync } from 'sistemium-telegram/services/async';
+import log from 'sistemium-debug';
+import * as dates from 'sistemium-dates';
+import eachSeriesAsync from 'async/eachSeries';
 
 import maxBy from 'lodash/maxBy';
 import map from 'lodash/map';
@@ -41,7 +41,7 @@ export default async function (conn) {
         ? as deviceCts,
         ? as xid
   ) as d on d.xid = t.xid
-  
+
   when not matched
     then insert
 
@@ -76,7 +76,7 @@ export default async function (conn) {
       barcodes.length > 10 ? barcodes : null,
       a.packageRel,
       a.pieceVolume,
-      serverDateTimeFormat(a.cts),
+      dates.serverTimestamp(a.cts),
       a.id,
     ];
 
