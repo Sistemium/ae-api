@@ -1,4 +1,4 @@
-import log from 'sistemium-debug';
+import log from 'sistemium-telegram/services/log';
 import * as mongoose from 'sistemium-mongo/lib/mongoose';
 import debounce from 'lodash/debounce';
 
