@@ -13,7 +13,7 @@
   "license": "ISC",
   "repository": "Sistemium/ae-api",
   "dependencies": {
-    "async": "^2.6.3",
+    "async": "^2.6.4",
     "esm": "^3.2.25",
     "koa-router": "^7.4.0",
     "lodash": "^4.17.21",
