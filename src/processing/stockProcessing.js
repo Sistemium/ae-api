@@ -1,9 +1,9 @@
 import map from 'lodash/map';
 import first from 'lodash/first';
 
-import log from 'sistemium-telegram/services/log';
-import { serverDateFormat } from 'sistemium-telegram/services/moments';
-import { eachSeriesAsync } from 'sistemium-telegram/services/async';
+import log from 'sistemium-debug';
+import * as dates from 'sistemium-dates';
+import eachSeriesAsync from 'async/eachSeries';
 
 import Anywhere from 'sistemium-sqlanywhere';
 
@@ -135,7 +135,7 @@ async function stockTimestamps() {
 
 async function processWarehouseStock(warehouseId, timestamp, conn) {
 
-  const date = serverDateFormat(timestamp);
+  const date = dates.addMonths(timestamp, 0);
   const data = await stockByArticle(warehouseId, timestamp);
 
   debug('processWarehouseStock:', warehouseId, date, data.length);

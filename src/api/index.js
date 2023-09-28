@@ -1,7 +1,7 @@
 import Router from 'koa-router';
 import KoaApi from 'sistemium-mongo/lib/koa';
 import { defaultRoutes } from 'sistemium-mongo/lib/api';
-import auth from 'sistemium-mongo/lib/auth';
+import auth from 'sistemium-auth/lib/middleware';
 
 import Article from '../models/Article';
 import Stock from '../models/Stock';
