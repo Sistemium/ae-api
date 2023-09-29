@@ -18,3 +18,14 @@ const stockSchema = new ModelSchema({
 
 export default stockSchema.model();
 export const schema = stockSchema.mongooseSchema();
+
+export async function postStockController(ctx, next) {
+  const { body } = ctx.request;
+  const isArray = Array.isArray(body);
+  const array = isArray ? body : [body];
+  const timestamp = new Date();
+  array.forEach(item => {
+    Object.assign(item, { timestamp });
+  });
+  await next();
+}
