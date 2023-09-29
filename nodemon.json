@@ -1,7 +1,7 @@
 {
   "env": {
     "DEBUG": "stm:*",
-    "MONGO_URL": "mng1.sistemium.net/AE",
+    "MONGO_URL": "mng2.sistemium.net/AE",
     "DEBUG_NAMESPACE": "stm:ae",
     "ERROR_NAMESPACE": "stm:ae:error",
     "REST_PORT": "9330"
