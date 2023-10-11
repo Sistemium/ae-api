@@ -38,15 +38,14 @@ export default async function () {
 
   try {
 
-    await conn.connect();
-
-    await articleProcessing(conn);
-
     if (!jobs.length) {
       debug('nothing to process');
       busy = false;
       return;
     }
+
+    await conn.connect();
+    await articleProcessing(conn);
 
     await conn.execImmediate(sql.declare);
 
